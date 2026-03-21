@@ -1,0 +1,10 @@
+# Whispr – Netlify Configuration
+# Drop this file in the project root alongside index.html
+
+[build]
+  publish = "."
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

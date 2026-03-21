@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="theme-color" content="#0d0d14" />
+  <meta name="description" content="Whispr – Receive anonymous messages from anyone. Share your link and discover what people really think." />
+
+  <!-- Open Graph / Social Sharing -->
+  <meta property="og:title" content="Whispr – Anonymous Messages" />
+  <meta property="og:description" content="Send me anonymous messages – I dare you 👀" />
+  <meta property="og:image" content="https://whispr.app/og-image.png" />
+  <meta property="og:type" content="website" />
+
+  <title>Whispr – Anonymous Messages</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+
+  <!-- Firebase SDK (v9 compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics-compat.js"></script>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ==================== NOISE OVERLAY ==================== -->
+  <div class="noise-overlay"></div>
+
+  <!-- ==================== SCREEN: LANDING ==================== -->
+  <section id="screen-landing" class="screen active">
+    <div class="landing-bg">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+    </div>
+
+    <div class="landing-content">
+      <div class="logo-wrap">
+        <span class="logo-icon">👁️</span>
+        <h1 class="logo-text">whispr</h1>
+      </div>
+      <p class="tagline">Secrets don't keep themselves.</p>
+
+      <!-- Ad Slot: Top Banner (AdSense ready) -->
+      <div class="ad-slot ad-slot--top" id="ad-top">
+        <!-- <ins class="adsbygoogle" data-ad-client="ca-pub-XXXXXX" data-ad-slot="XXXXXX"></ins> -->
+      </div>
+
+      <div class="card setup-card">
+        <p class="card-label">Pick your username</p>
+        <div class="input-row">
+          <span class="input-prefix">whispr.to/</span>
+          <input type="text" id="username-input" placeholder="yourname" maxlength="24" autocomplete="off" spellcheck="false" />
+        </div>
+        <button class="btn btn-primary" id="btn-create">
+          <span>Get my link</span>
+          <span class="btn-arrow">→</span>
+        </button>
+        <p class="login-hint">Already have a link? <button class="link-btn" id="btn-login">Sign in →</button></p>
+      </div>
+
+      <div class="social-proof">
+        <div class="avatars">
+          <div class="av" style="background:#f97316"></div>
+          <div class="av" style="background:#a855f7"></div>
+          <div class="av" style="background:#22d3ee"></div>
+          <div class="av" style="background:#f43f5e"></div>
+        </div>
+        <p>12,847 people got messages today 🔥</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== SCREEN: SEND (Public link page) ==================== -->
+  <section id="screen-send" class="screen">
+    <div class="send-bg">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+    </div>
+
+    <div class="send-content">
+      <div class="send-header">
+        <div class="avatar-large" id="send-avatar"></div>
+        <h2 id="send-username-display">@username</h2>
+        <p class="send-subtitle">Send an anonymous message 👀</p>
+        <div class="streak-badge" id="send-streak">🔥 Hot today</div>
+      </div>
+
+      <!-- Message Type Selector -->
+      <div class="type-selector">
+        <button class="type-btn active" data-type="text">💬 Text</button>
+        <button class="type-btn" data-type="poll">📊 Poll</button>
+        <button class="type-btn" data-type="voice">🎤 Voice</button>
+        <button class="type-btn" data-type="rating">⭐ Rate</button>
+      </div>
+
+      <!-- TEXT panel -->
+      <div class="msg-panel active" id="panel-text">
+        <div class="card send-card">
+          <textarea id="msg-text" placeholder="Write something anonymous… 👀&#10;They'll never know it's you 😏" maxlength="300" rows="4"></textarea>
+          <div class="char-counter"><span id="char-count">0</span>/300</div>
+
+          <!-- Guess Who hint toggle -->
+          <div class="hint-toggle">
+            <label class="toggle-label">
+              <input type="checkbox" id="hint-toggle-cb" />
+              <span class="toggle-slider"></span>
+              Add a mysterious hint 🕵️
+            </label>
+          </div>
+          <div class="hint-options hidden" id="hint-options">
+            <button class="hint-chip" data-hint="Same school as you 🏫">Same school 🏫</button>
+            <button class="hint-chip" data-hint="We've met IRL 👋">Met IRL 👋</button>
+            <button class="hint-chip" data-hint="Starts with the letter A 🔤">Starts with A</button>
+            <button class="hint-chip" data-hint="In your contacts 📱">In your contacts 📱</button>
+            <button class="hint-chip" data-hint="Closer than you think 😏">Close to you 😏</button>
+          </div>
+        </div>
+        <button class="btn btn-send" id="btn-send-text">
+          <span>Send anonymously 🚀</span>
+        </button>
+      </div>
+
+      <!-- POLL panel -->
+      <div class="msg-panel" id="panel-poll">
+        <div class="card send-card">
+          <input type="text" id="poll-question" placeholder="Ask a question… e.g. Do you like me? 💭" maxlength="100" />
+          <div class="poll-options-wrap">
+            <input type="text" class="poll-opt" id="poll-opt-a" placeholder="Option A" maxlength="40" value="Yes 💚" />
+            <input type="text" class="poll-opt" id="poll-opt-b" placeholder="Option B" maxlength="40" value="No ❌" />
+          </div>
+        </div>
+        <button class="btn btn-send" id="btn-send-poll">Send Poll 📊</button>
+      </div>
+
+      <!-- VOICE panel -->
+      <div class="msg-panel" id="panel-voice">
+        <div class="card send-card voice-card">
+          <div class="voice-visualizer" id="voice-visualizer">
+            <div class="voice-idle">
+              <div class="mic-icon">🎤</div>
+              <p>Tap to record</p>
+              <p class="voice-sub">Max 30 seconds</p>
+            </div>
+            <div class="voice-bars" id="voice-bars">
+              <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+              <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+              <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+            </div>
+            <div class="voice-timer hidden" id="voice-timer">0:00</div>
+          </div>
+          <div class="voice-controls">
+            <button class="btn-voice-rec" id="btn-record">⏺ Start Recording</button>
+            <button class="btn-voice-send hidden" id="btn-send-voice">Send Voice 🎤</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RATING panel -->
+      <div class="msg-panel" id="panel-rating">
+        <div class="card send-card">
+          <p class="rating-prompt">Rate <span id="rating-username">them</span> out of 10 ⭐</p>
+          <div class="stars-row" id="stars-row">
+            <span class="star" data-val="1">★</span>
+            <span class="star" data-val="2">★</span>
+            <span class="star" data-val="3">★</span>
+            <span class="star" data-val="4">★</span>
+            <span class="star" data-val="5">★</span>
+            <span class="star" data-val="6">★</span>
+            <span class="star" data-val="7">★</span>
+            <span class="star" data-val="8">★</span>
+            <span class="star" data-val="9">★</span>
+            <span class="star" data-val="10">★</span>
+          </div>
+          <p class="rating-val-display" id="rating-val">Tap to rate</p>
+          <textarea id="rating-note" placeholder="Add a note (optional) 💌" maxlength="150" rows="2"></textarea>
+        </div>
+        <button class="btn btn-send" id="btn-send-rating">Send Rating ⭐</button>
+      </div>
+
+      <!-- Engagement line -->
+      <p class="engagement-line" id="send-engagement">🔒 100% anonymous – they will NEVER know it's you</p>
+
+      <!-- Ad slot bottom -->
+      <div class="ad-slot ad-slot--bottom" id="ad-send-bottom">
+        <!-- AdSense slot -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== SCREEN: INBOX ==================== -->
+  <section id="screen-inbox" class="screen">
+    <div class="inbox-header">
+      <div class="inbox-top-row">
+        <div class="user-chip" id="inbox-user-chip">
+          <span class="user-chip-av" id="inbox-chip-av"></span>
+          <span id="inbox-chip-name">@you</span>
+        </div>
+        <button class="icon-btn" id="btn-settings" title="Settings">⚙️</button>
+      </div>
+
+      <!-- Stats bar -->
+      <div class="stats-bar">
+        <div class="stat-item">
+          <span class="stat-num" id="stat-messages">0</span>
+          <span class="stat-label">messages</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num" id="stat-views">0</span>
+          <span class="stat-label">link views</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num" id="stat-rating">–</span>
+          <span class="stat-label">avg rating</span>
+        </div>
+      </div>
+
+      <!-- Share-to-unlock banner -->
+      <div class="unlock-banner" id="unlock-banner">
+        <div class="unlock-content">
+          <span class="lock-icon">🔓</span>
+          <div>
+            <p class="unlock-title">Unlock more messages!</p>
+            <p class="unlock-sub">Share your link to unlock hidden messages 👇</p>
+          </div>
+        </div>
+        <div class="share-row">
+          <button class="share-btn share-wa" id="btn-share-wa">
+            <span>WhatsApp</span>
+          </button>
+          <button class="share-btn share-ig" id="btn-share-ig">
+            <span>Instagram</span>
+          </button>
+          <button class="share-btn share-copy" id="btn-share-copy">
+            <span>Copy Link</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- My link display -->
+      <div class="my-link-row">
+        <span class="my-link-text" id="my-link-text">whispr.to/you</span>
+        <button class="icon-btn" id="btn-copy-link" title="Copy link">📋</button>
+      </div>
+    </div>
+
+    <!-- Notification bar -->
+    <div class="notif-bar" id="notif-bar">
+      <span class="notif-pulse"></span>
+      <span id="notif-text">You have new messages 👀</span>
+    </div>
+
+    <!-- Ad slot – native-style, in feed -->
+    <div class="ad-slot ad-slot--native" id="ad-inbox-native">
+      <!-- AdSense native ad -->
+    </div>
+
+    <!-- Message Feed -->
+    <div class="message-feed" id="message-feed">
+      <!-- Messages injected here -->
+    </div>
+
+    <!-- Empty state -->
+    <div class="empty-state hidden" id="empty-state">
+      <div class="empty-icon">👁️</div>
+      <h3>No messages yet</h3>
+      <p>Share your link and watch the secrets roll in…</p>
+      <button class="btn btn-primary" id="btn-share-empty">Share my link</button>
+    </div>
+
+    <!-- Bottom nav -->
+    <div class="bottom-nav">
+      <button class="nav-btn active" id="nav-inbox">
+        <span class="nav-icon">💬</span>
+        <span>Inbox</span>
+        <span class="nav-badge" id="nav-badge"></span>
+      </button>
+      <button class="nav-btn" id="nav-share-link">
+        <span class="nav-icon">🔗</span>
+        <span>My Link</span>
+      </button>
+      <button class="nav-btn" id="nav-logout">
+        <span class="nav-icon">🚪</span>
+        <span>Logout</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ==================== MODAL: Message Detail ==================== -->
+  <div class="modal-overlay hidden" id="msg-modal">
+    <div class="modal-card" id="msg-modal-card">
+      <button class="modal-close" id="modal-close">✕</button>
+      <div class="modal-type-badge" id="modal-type-badge">💬</div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-hint" id="modal-hint"></div>
+      <div class="modal-meta" id="modal-meta"></div>
+      <div class="modal-actions">
+        <button class="btn btn-primary btn-sm" id="btn-share-reply">Share as story 📸</button>
+        <button class="modal-action-btn" id="btn-delete-msg">🗑️ Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: Share Sheet ==================== -->
+  <div class="modal-overlay hidden" id="share-modal">
+    <div class="modal-card share-modal-card">
+      <button class="modal-close" id="share-modal-close">✕</button>
+      <h3 class="share-modal-title">Share your link 🔗</h3>
+      <p class="share-modal-sub">The more you share, the more messages you get!</p>
+      <div class="share-link-box" id="share-link-box">
+        <span id="share-link-url">whispr.to/you</span>
+        <button class="copy-inline-btn" id="copy-inline-btn">Copy</button>
+      </div>
+      <div class="share-btns-grid">
+        <button class="share-large-btn" id="sl-wa">
+          <span class="share-large-icon">💬</span>
+          <span>WhatsApp</span>
+        </button>
+        <button class="share-large-btn" id="sl-ig">
+          <span class="share-large-icon">📸</span>
+          <span>Instagram</span>
+        </button>
+        <button class="share-large-btn" id="sl-tw">
+          <span class="share-large-icon">🐦</span>
+          <span>Twitter/X</span>
+        </button>
+        <button class="share-large-btn" id="sl-tg">
+          <span class="share-large-icon">✈️</span>
+          <span>Telegram</span>
+        </button>
+      </div>
+      <p class="share-cta">👀 Someone is waiting to send you a secret</p>
+    </div>
+  </div>
+
+  <!-- ==================== TOAST ==================== -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ==================== CONFETTI CANVAS ==================== -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <script src="firebase-config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
